@@ -1,18 +1,18 @@
 
 import sqlite3
 import math
-import io
+import os
 
-from datetime import datetime
-from flask import (
-    Flask, render_template, request, redirect,
-    url_for, flash, send_file
-)
+from flask import Flask, render_template, request, redirect, url_for, flash
 
 app = Flask(__name__)
-app.secret_key = "becora-pos-secret-key"
+app.secret_key = os.environ.get(
+    "SECRET_KEY",
+    "becora-pos-secret-key"
+)
 
-DATABASE = "becora.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATABASE = os.path.join(BASE_DIR, "becora.db")
 LOW_STOCK_LIMIT = 5
 
 
@@ -271,32 +271,17 @@ def checkout():
         data = request.get_json(silent=True)
 
         if not isinstance(data, dict):
-            return {
-                "success": False,
-                "message": "Invalid checkout data."
-            }, 400
+            raise ValueError("Invalid checkout data.")
 
         cart = data.get("cart")
-        amount_paid = data.get("amount_paid")
         payment_method = data.get("payment_method")
+        amount_paid = data.get("amount_paid")
 
         if not isinstance(cart, list) or not cart:
-            return {
-                "success": False,
-                "message": "Your cart is empty."
-            }, 400
+            raise ValueError("Your cart is empty.")
 
         if payment_method not in ("Cash", "Card"):
             raise ValueError("Please select a valid payment method.")
-
-        if payment_method == "Cash":
-            if (
-                isinstance(amount_paid, bool)
-                or not isinstance(amount_paid, (int, float))
-                or not math.isfinite(amount_paid)
-                or amount_paid < 0
-            ):
-                raise ValueError("Invalid cash amount.")
 
         quantities = {}
 
@@ -333,7 +318,9 @@ def checkout():
             ).fetchone()
 
             if product is None:
-                raise ValueError("A product in your cart no longer exists.")
+                raise ValueError(
+                    "A product in your cart no longer exists."
+                )
 
             if product["stock"] < quantity:
                 raise ValueError(
@@ -343,7 +330,6 @@ def checkout():
 
             unit_price = float(product["price"])
             line_total = round(unit_price * quantity, 2)
-
             subtotal += line_total
 
             sale_items.append({
@@ -358,33 +344,38 @@ def checkout():
         discount = 0.0
         total = round(subtotal - discount, 2)
 
-        if payment_method == "Card":
-            amount_paid = total
-            change_due = 0.0
-        else:
+        if payment_method == "Cash":
+            if (
+                isinstance(amount_paid, bool)
+                or not isinstance(amount_paid, (int, float))
+                or not math.isfinite(amount_paid)
+            ):
+                raise ValueError("Please enter a valid cash amount.")
+
             amount_paid = round(float(amount_paid), 2)
 
             if amount_paid < total:
-                raise ValueError("Cash received is less than the total.")
+                raise ValueError(
+                    "Cash received is less than the total."
+                )
 
             change_due = round(amount_paid - total, 2)
 
+        else:
+            amount_paid = total
+            change_due = 0.0
+
         cursor = conn.execute(
             """
-            INSERT INTO sales
-            (
+            INSERT INTO sales (
                 subtotal, discount, total,
                 amount_paid, change_due, payment_method
             )
             VALUES (?, ?, ?, ?, ?, ?)
             """,
             (
-                subtotal,
-                discount,
-                total,
-                amount_paid,
-                change_due,
-                payment_method
+                subtotal, discount, total,
+                amount_paid, change_due, payment_method
             )
         )
 
@@ -393,8 +384,7 @@ def checkout():
         for item in sale_items:
             conn.execute(
                 """
-                INSERT INTO sale_items
-                (
+                INSERT INTO sale_items (
                     sale_id, product_id, product_name,
                     unit_price, quantity, line_total
                 )
@@ -428,12 +418,12 @@ def checkout():
             "discount": discount,
             "total": total,
             "amount_paid": amount_paid,
-            "change_due": change_due
+            "change_due": change_due,
+            "payment_method": payment_method
         }
 
     except (ValueError, TypeError, AttributeError) as error:
         conn.rollback()
-
         return {
             "success": False,
             "message": str(error)
@@ -441,7 +431,7 @@ def checkout():
 
     except Exception:
         conn.rollback()
-
+        app.logger.exception("Checkout failed")
         return {
             "success": False,
             "message": "Checkout failed. Please try again."
@@ -482,7 +472,7 @@ def receipt(sale_id):
     )
 
 
-# SALES HISTORY & DAILY / MONTHLY REPORTS
+# SALES HISTORY & REPORTS
 @app.route("/sales-history")
 def sales_history():
     conn = get_db_connection()
@@ -505,14 +495,6 @@ def sales_history():
         """
     ).fetchone()[0]
 
-    month_sales = conn.execute(
-        """
-        SELECT COUNT(*) FROM sales
-        WHERE strftime('%Y-%m', sale_date, 'localtime')
-              = strftime('%Y-%m', 'now', 'localtime')
-        """
-    ).fetchone()[0]
-
     total_revenue = conn.execute(
         """
         SELECT COALESCE(SUM(total), 0) FROM sales
@@ -526,14 +508,6 @@ def sales_history():
         """
     ).fetchone()[0]
 
-    month_revenue = conn.execute(
-        """
-        SELECT COALESCE(SUM(total), 0) FROM sales
-        WHERE strftime('%Y-%m', sale_date, 'localtime')
-              = strftime('%Y-%m', 'now', 'localtime')
-        """
-    ).fetchone()[0]
-
     conn.close()
 
     return render_template(
@@ -541,45 +515,14 @@ def sales_history():
         sales=sales,
         total_sales=total_sales,
         today_sales=today_sales,
-        month_sales=month_sales,
         total_revenue=total_revenue,
-        today_revenue=today_revenue,
-        month_revenue=month_revenue
+        today_revenue=today_revenue
     )
 
 
-# DATABASE BACKUP
-@app.route("/backup")
-def backup_database():
-    source_conn = get_db_connection()
-    backup_conn = sqlite3.connect(":memory:")
-
-    try:
-        source_conn.backup(backup_conn)
-
-        backup_data = backup_conn.serialize()
-
-        backup_file = io.BytesIO(backup_data)
-        backup_file.seek(0)
-
-        filename = (
-            "BECORA_Backup_"
-            + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            + ".db"
-        )
-
-        return send_file(
-            backup_file,
-            mimetype="application/x-sqlite3",
-            as_attachment=True,
-            download_name=filename
-        )
-
-    finally:
-        source_conn.close()
-        backup_conn.close()
+# INITIALIZE DATABASE FOR LOCAL AND CLOUD SERVER
+create_database()
 
 
 if __name__ == "__main__":
-    create_database()
     app.run(debug=True)
