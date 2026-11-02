@@ -1,0 +1,7 @@
+
+venv/
+__pycache__/
+*.pyc
+becora.db
+BECORA_Backup_*.db
+.env

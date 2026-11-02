@@ -1,0 +1,153 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>BECORA | Edit Product</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        body {
+            margin: 0;
+            background: #fff8fa;
+            font-family: Arial, sans-serif;
+            color: #49343c;
+        }
+
+        .container {
+            max-width: 650px;
+            margin: 50px auto;
+            padding: 30px;
+        }
+
+        .form-card {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: #c85d85;
+        }
+
+        label {
+            display: block;
+            margin-top: 18px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 13px;
+            margin-top: 8px;
+            border: 1px solid #e5d5dc;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #d96b91;
+            color: white;
+            border: none;
+            padding: 13px 22px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 25px;
+        }
+
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #c85d85;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <a href="/products" class="back">← Back to Products</a>
+
+    <div class="form-card">
+
+        <h1>✏️ Edit Product</h1>
+
+        <p>Update your product information.</p>
+
+        <form method="POST">
+
+            <label>Product Name</label>
+
+            <input type="text"
+                   name="name"
+                   value="{{ product[1] }}"
+                   required>
+
+            <label>Category</label>
+
+            <select name="category" required>
+                <option value="Birthday Cake"
+                    {% if product[2] == "Birthday Cake" %}selected{% endif %}>
+                    Birthday Cake
+                </option>
+
+                <option value="Wedding Cake"
+                    {% if product[2] == "Wedding Cake" %}selected{% endif %}>
+                    Wedding Cake
+                </option>
+
+                <option value="Chocolate Cake"
+                    {% if product[2] == "Chocolate Cake" %}selected{% endif %}>
+                    Chocolate Cake
+                </option>
+
+                <option value="Cupcake"
+                    {% if product[2] == "Cupcake" %}selected{% endif %}>
+                    Cupcake
+                </option>
+
+                <option value="Butter Cake"
+                    {% if product[2] == "Butter Cake" %}selected{% endif %}>
+                    Butter Cake
+                </option>
+
+                <option value="Other"
+                    {% if product[2] == "Other" %}selected{% endif %}>
+                    Other
+                </option>
+            </select>
+
+            <label>Selling Price (Rs.)</label>
+
+            <input type="number"
+                   name="price"
+                   value="{{ product[3] }}"
+                   min="0.01"
+                   step="0.01"
+                   required>
+
+            <label>Available Stock</label>
+
+            <input type="number"
+                   name="stock"
+                   value="{{ product[4] }}"
+                   min="0"
+                   step="1"
+                   required>
+
+            <button type="submit">Update Product</button>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>

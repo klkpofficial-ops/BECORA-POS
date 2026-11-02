@@ -1,0 +1,260 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BECORA | Products</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        body {
+            margin: 0;
+            background: #fff8fa;
+            font-family: Arial, sans-serif;
+            color: #49343c;
+        }
+
+        .container {
+            padding: 30px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        h1 { color: #c85d85; }
+
+        .panel {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 25px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e5d5dc;
+            border-radius: 8px;
+            box-sizing: border-box;
+            margin-top: 7px;
+        }
+
+        button, .btn {
+            background: #d96b91;
+            color: white;
+            border: none;
+            padding: 11px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 12px;
+        }
+
+        .delete-btn { background: #c94d5c; }
+        .edit-btn { background: #b779a0; }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-form input { flex: 1; }
+
+        .table-wrap { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 650px;
+        }
+
+        th, td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #f0e5e9;
+        }
+
+        th { background: #fff0f5; }
+
+        .low-stock {
+            color: #c0394b;
+            font-weight: bold;
+        }
+
+        .normal-stock {
+            color: #27865b;
+            font-weight: bold;
+        }
+
+        .alert {
+            background: #fff0f0;
+            color: #b63d4c;
+            padding: 14px;
+            border-radius: 10px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        @media(max-width: 650px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .container { padding: 15px; }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <a href="/" class="btn">← Dashboard</a>
+
+    <h1>🍰 Products Management</h1>
+    <p>Manage your cake shop inventory</p>
+
+    {% if low_stock_count > 0 %}
+    <div class="alert">
+        ⚠️ Low Stock Alert: {{ low_stock_count }}
+        product(s) have stock of {{ low_stock_limit }} or less.
+    </div>
+    {% endif %}
+
+    <div class="panel">
+        <h2>Add New Product</h2>
+
+        <form method="POST" action="/products">
+
+            <div class="form-grid">
+
+                <div>
+                    <label>Product Name</label>
+                    <input type="text" name="name"
+                           placeholder="Enter cake name" required>
+                </div>
+
+                <div>
+                    <label>Category</label>
+                    <select name="category" required>
+                        <option value="">Select Category</option>
+                        <option>Birthday Cake</option>
+                        <option>Wedding Cake</option>
+                        <option>Chocolate Cake</option>
+                        <option>Cupcake</option>
+                        <option>Butter Cake</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>Selling Price (Rs.)</label>
+                    <input type="number" name="price"
+                           min="0.01" step="0.01" required>
+                </div>
+
+                <div>
+                    <label>Available Stock</label>
+                    <input type="number" name="stock"
+                           min="0" step="1" required>
+                </div>
+
+            </div>
+
+            <button type="submit">+ Save Product</button>
+
+        </form>
+    </div>
+
+    <div class="panel">
+
+        <h2>Product List</h2>
+
+        <form method="GET" action="/products" class="search-form">
+            <input type="text" name="search"
+                   placeholder="Search product name or category..."
+                   value="{{ search }}">
+            <button type="submit">Search</button>
+            <a href="/products" class="btn">Clear</a>
+        </form>
+
+        <br>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Product Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for product in products %}
+                    <tr>
+                        <td>{{ product[0] }}</td>
+                        <td>{{ product[1] }}</td>
+                        <td>{{ product[2] }}</td>
+                        <td>Rs. {{ "%.2f"|format(product[3]) }}</td>
+
+                        <td>
+                            {% if product[4] <= low_stock_limit %}
+                                <span class="low-stock">
+                                    {{ product[4] }} - Low
+                                </span>
+                            {% else %}
+                                <span class="normal-stock">
+                                    {{ product[4] }}
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <div class="actions">
+                                <a href="/products/edit/{{ product[0] }}"
+                                   class="btn edit-btn">Edit</a>
+
+                                <form method="POST"
+                                      action="/products/delete/{{ product[0] }}"
+                                      onsubmit="return confirm('Are you sure you want to delete this product?');">
+
+                                    <button type="submit"
+                                            class="delete-btn">
+                                        Delete
+                                    </button>
+
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+
+                    {% else %}
+                    <tr>
+                        <td colspan="6">No products found.</td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

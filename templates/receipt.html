@@ -1,0 +1,315 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BECORA | Sales Receipt</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 15px;
+            background: #fff8fa;
+            font-family: Arial, sans-serif;
+            color: #45343b;
+        }
+
+        .receipt {
+            max-width: 650px;
+            margin: auto;
+            background: white;
+            padding: 35px;
+            border-radius: 14px;
+            box-shadow: 0 3px 18px rgba(0,0,0,0.08);
+        }
+
+        .receipt-header {
+            text-align: center;
+            border-bottom: 2px dashed #e8bdcd;
+            padding-bottom: 22px;
+        }
+
+        .receipt-header h1 {
+            color: #c35c80;
+            font-size: 34px;
+            letter-spacing: 3px;
+            margin: 0 0 8px;
+        }
+
+        .receipt-header p {
+            color: #888;
+            margin: 5px 0;
+        }
+
+        .receipt-title {
+            text-align: center;
+            margin: 22px 0;
+            color: #b94f75;
+        }
+
+        .details {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 22px;
+            flex-wrap: wrap;
+        }
+
+        .details p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 22px;
+        }
+
+        th {
+            background: #fff0f5;
+            color: #a7476a;
+            text-align: left;
+            padding: 12px 8px;
+            font-size: 13px;
+        }
+
+        td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #f1e3e8;
+            font-size: 14px;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .totals {
+            max-width: 300px;
+            margin-left: auto;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 9px 0;
+            font-size: 14px;
+        }
+
+        .grand-total {
+            border-top: 2px solid #e8bdcd;
+            margin-top: 8px;
+            padding-top: 15px;
+            color: #b94f75;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .payment-info {
+            background: #fff4f7;
+            padding: 15px;
+            border-radius: 9px;
+            margin-top: 22px;
+        }
+
+        .payment-info p {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .thank-you {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px dashed #e8bdcd;
+            color: #b94f75;
+        }
+
+        .thank-you h3 {
+            margin-bottom: 8px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .actions a,
+        .actions button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 7px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .print-btn {
+            background: #b94f75;
+            color: white;
+        }
+
+        .pos-btn {
+            background: #f8e1e9;
+            color: #a7476a;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .receipt {
+                box-shadow: none;
+                border-radius: 0;
+                max-width: 100%;
+                padding: 15px;
+            }
+
+            .actions {
+                display: none;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .receipt {
+                padding: 20px 12px;
+            }
+
+            th, td {
+                padding: 9px 5px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="receipt">
+
+        <div class="receipt-header">
+            <h1>BECORA</h1>
+            <p>Cake Shop Management & POS</p>
+            <p>Thank you for shopping with us!</p>
+        </div>
+
+        <h2 class="receipt-title">SALES RECEIPT</h2>
+
+        <div class="details">
+
+            <div>
+                <p><strong>Receipt No:</strong> #{{ sale['id'] }}</p>
+                <p><strong>Date:</strong> {{ sale['sale_date'] }}</p>
+            </div>
+
+            <div>
+                <p><strong>Payment:</strong> {{ sale['payment_method'] }}</p>
+                <p><strong>Status:</strong> Paid</p>
+            </div>
+
+        </div>
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th class="right">Price</th>
+                    <th class="right">Qty</th>
+                    <th class="right">Total</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for item in items %}
+
+                <tr>
+                    <td>{{ item['product_name'] }}</td>
+
+                    <td class="right">
+                        {{ "%.2f"|format(item['unit_price']) }}
+                    </td>
+
+                    <td class="right">
+                        {{ item['quantity'] }}
+                    </td>
+
+                    <td class="right">
+                        {{ "%.2f"|format(item['line_total']) }}
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+        <div class="totals">
+
+            <div class="total-row">
+                <span>Subtotal</span>
+                <strong>Rs. {{ "%.2f"|format(sale['subtotal']) }}</strong>
+            </div>
+
+            <div class="total-row">
+                <span>Discount</span>
+                <strong>Rs. {{ "%.2f"|format(sale['discount']) }}</strong>
+            </div>
+
+            <div class="total-row grand-total">
+                <span>Total</span>
+                <span>Rs. {{ "%.2f"|format(sale['total']) }}</span>
+            </div>
+
+        </div>
+
+        <div class="payment-info">
+
+            <p>
+                <span>Cash Received</span>
+                <strong>Rs. {{ "%.2f"|format(sale['amount_paid']) }}</strong>
+            </p>
+
+            <p>
+                <span>Change</span>
+                <strong>Rs. {{ "%.2f"|format(sale['change_due']) }}</strong>
+            </p>
+
+        </div>
+
+        <div class="thank-you">
+            <h3>Thank You!</h3>
+            <p>We hope you enjoy your delicious treats.</p>
+            <p>Come Again ❤️</p>
+        </div>
+
+        <div class="actions">
+
+            <button class="print-btn" onclick="window.print()">
+                Print Receipt
+            </button>
+
+            <a href="{{ url_for('pos') }}" class="pos-btn">
+                Back to POS
+            </a>
+
+        </div>
+
+    </div>
+
+</body>
+</html>

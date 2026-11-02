@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>BECORA | Dashboard</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        body {
+            margin: 0;
+            background: #fff8fa;
+            font-family: Arial, sans-serif;
+            color: #49343c;
+        }
+
+        .dashboard {
+            padding: 35px;
+        }
+
+        .header {
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #c85d85;
+            margin-bottom: 5px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 22px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-left: 5px solid #e99ab5;
+        }
+
+        .card h3 {
+            color: #927580;
+            font-size: 15px;
+        }
+
+        .card h2 {
+            font-size: 30px;
+            color: #c85d85;
+        }
+
+        .menu {
+            margin-top: 35px;
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+        }
+
+        .menu a {
+            display: inline-block;
+            padding: 12px 22px;
+            margin: 8px 8px 0 0;
+            background: #d96b91;
+            color: white;
+            text-decoration: none;
+            border-radius: 9px;
+            transition: 0.3s;
+        }
+
+        .menu a:hover {
+            background: #bd5279;
+            transform: translateY(-2px);
+        }
+
+        .menu a.backup {
+            background: #8c7180;
+        }
+
+        .menu a.backup:hover {
+            background: #705563;
+        }
+
+        .welcome {
+            color: #927580;
+        }
+
+        @media (max-width: 600px) {
+            .dashboard {
+                padding: 18px;
+            }
+
+            .menu a {
+                display: block;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <div class="header">
+        <h1>🍰 BECORA</h1>
+        <h2>Dashboard</h2>
+        <p class="welcome">
+            Welcome to BECORA Cake Shop Management System
+        </p>
+    </div>
+
+    <!-- DASHBOARD CARDS -->
+    <div class="cards">
+
+        <div class="card">
+            <h3>Total Products</h3>
+            <h2>{{ total_products }}</h2>
+            <p>Products in system</p>
+        </div>
+
+        <div class="card">
+            <h3>Total Stock</h3>
+            <h2>{{ total_stock }}</h2>
+            <p>Available items</p>
+        </div>
+
+        <div class="card">
+            <h3>Inventory Value</h3>
+            <h2>Rs. {{ "%.2f"|format(inventory_value) }}</h2>
+            <p>Current stock value</p>
+        </div>
+
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="menu">
+
+        <h2>Quick Actions</h2>
+
+        <a href="/products">Manage Products</a>
+
+        <a href="/products">Add New Product</a>
+
+        <a href="/pos">POS System</a>
+
+        <a href="/sales-history">Sales History</a>
+
+        <a href="/backup" class="backup">⬇ Database Backup</a>
+
+    </div>
+
+    <!-- ABOUT -->
+    <div class="menu">
+
+        <h2>About BECORA</h2>
+
+        <p>
+            BECORA is a Cake Shop Management and POS System.
+            Manage products, stock and sales in one place.
+        </p>
+
+    </div>
+
+</div>
+
+</body>
+</html>

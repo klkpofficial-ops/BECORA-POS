@@ -1,0 +1,670 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BECORA | Point of Sale</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: #fff8fa;
+            font-family: Arial, sans-serif;
+            color: #45343b;
+        }
+
+        .header {
+            background: #e88ca9;
+            color: white;
+            padding: 20px 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 { margin: 0; font-size: 26px; }
+
+        .header a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1250px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .page-title { margin-bottom: 25px; }
+
+        .page-title h2 {
+            color: #b94f75;
+            margin-bottom: 5px;
+        }
+
+        .pos-layout {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 25px;
+            align-items: start;
+        }
+
+        .panel {
+            background: white;
+            padding: 25px;
+            border-radius: 14px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.06);
+        }
+
+        .panel h3 {
+            margin-top: 0;
+            color: #b94f75;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .product-card {
+            border: 1px solid #f2d5df;
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+            background: #fffafb;
+        }
+
+        .product-card h4 {
+            margin: 0 0 10px;
+            font-size: 17px;
+        }
+
+        .price {
+            color: #b94f75;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .stock {
+            color: #777;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            border-radius: 7px;
+            padding: 10px 15px;
+            font-weight: bold;
+        }
+
+        .add-btn {
+            background: #e88ca9;
+            color: white;
+            width: 100%;
+        }
+
+        .add-btn:hover { background: #d96f91; }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #f1e1e6;
+            padding: 13px 0;
+        }
+
+        .cart-info { flex: 1; }
+
+        .cart-info strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .cart-info small {
+            display: block;
+            color: #777;
+            margin-top: 3px;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quantity-controls button {
+            background: #f8e1e9;
+            color: #a74468;
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            font-size: 17px;
+        }
+
+        .remove-btn {
+            background: #ffe6e6;
+            color: #c0392b;
+            padding: 7px 10px;
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 30px 5px;
+            color: #999;
+        }
+
+        .summary {
+            border-top: 2px solid #f2d5df;
+            margin-top: 20px;
+            padding-top: 15px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 12px 0;
+        }
+
+        .total-row {
+            font-size: 21px;
+            font-weight: bold;
+            color: #b94f75;
+        }
+
+        .payment-field { margin-top: 18px; }
+
+        .payment-field label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .payment-field input,
+        .payment-field select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e6cbd5;
+            border-radius: 7px;
+            font-size: 16px;
+            background: white;
+        }
+
+        .change-display {
+            background: #fff1f5;
+            padding: 13px;
+            border-radius: 8px;
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+
+        .checkout-btn {
+            background: #b94f75;
+            color: white;
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        .checkout-btn:hover { background: #9f3e62; }
+
+        .checkout-btn:disabled {
+            background: #c9aab6;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 12px;
+            color: #c0392b;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        @media (max-width: 800px) {
+            .pos-layout { grid-template-columns: 1fr; }
+            .header { padding: 18px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>BECORA</h1>
+        <a href="/">← Dashboard</a>
+    </div>
+
+    <div class="container">
+
+        <div class="page-title">
+            <h2>Point of Sale</h2>
+            <p>Manage customer orders and complete sales.</p>
+        </div>
+
+        <div class="pos-layout">
+
+            <div class="panel">
+                <h3>Available Products</h3>
+
+                <div class="product-grid">
+
+                    {% for product in products %}
+
+                    <div class="product-card">
+                        <h4>{{ product['name'] }}</h4>
+
+                        <div class="price">
+                            Rs. {{ "%.2f"|format(product['price']) }}
+                        </div>
+
+                        <div class="stock">
+                            Available: {{ product['stock'] }}
+                        </div>
+
+                        <button
+                            class="add-btn"
+                            onclick="addToCart({{ product['id'] }})">
+                            Add to Cart
+                        </button>
+                    </div>
+
+                    {% else %}
+
+                    <p>No products available.</p>
+
+                    {% endfor %}
+
+                </div>
+            </div>
+
+            <div class="panel">
+
+                <h3>Shopping Cart</h3>
+
+                <div id="cart-items">
+                    <div class="empty-cart">
+                        Your cart is empty.
+                    </div>
+                </div>
+
+                <div class="summary">
+
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <strong id="subtotal">Rs. 0.00</strong>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Discount</span>
+                        <strong>Rs. 0.00</strong>
+                    </div>
+
+                    <div class="summary-row total-row">
+                        <span>Total</span>
+                        <span id="total">Rs. 0.00</span>
+                    </div>
+
+                </div>
+
+                <!-- PAYMENT METHOD -->
+                <div class="payment-field">
+
+                    <label for="payment-method">Payment Method</label>
+
+                    <select
+                        id="payment-method"
+                        onchange="updatePaymentMethod()">
+
+                        <option value="Cash">Cash</option>
+                        <option value="Card">Card</option>
+
+                    </select>
+
+                </div>
+
+                <!-- CASH RECEIVED -->
+                <div class="payment-field" id="cash-field">
+
+                    <label for="amount-paid">Cash Received (Rs.)</label>
+
+                    <input
+                        type="number"
+                        id="amount-paid"
+                        min="0"
+                        step="0.01"
+                        placeholder="Enter customer payment"
+                        oninput="updateChange()">
+
+                </div>
+
+                <div class="change-display">
+                    <span>Change</span>
+                    <span id="change">Rs. 0.00</span>
+                </div>
+
+                <button
+                    class="checkout-btn"
+                    id="checkout-btn"
+                    onclick="completeSale()"
+                    disabled>
+                    Complete Sale
+                </button>
+
+                <div class="message" id="message"></div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+
+        const products = [
+            {% for product in products %}
+            {
+                id: {{ product['id'] }},
+                name: {{ product['name']|tojson }},
+                price: {{ product['price'] }},
+                stock: {{ product['stock'] }}
+            },
+            {% endfor %}
+        ];
+
+        let cart = [];
+
+        function formatMoney(amount) {
+            return "Rs. " + Number(amount).toFixed(2);
+        }
+
+        function getTotal() {
+            return cart.reduce((sum, item) => {
+                return sum + (item.price * item.quantity);
+            }, 0);
+        }
+
+        function addToCart(productId) {
+
+            const product = products.find(p => p.id === productId);
+
+            if (!product) return;
+
+            const existingItem = cart.find(item => item.id === productId);
+
+            if (existingItem) {
+
+                if (existingItem.quantity >= product.stock) {
+                    alert("Not enough stock available!");
+                    return;
+                }
+
+                existingItem.quantity++;
+
+            } else {
+
+                cart.push({
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    stock: product.stock,
+                    quantity: 1
+                });
+            }
+
+            renderCart();
+        }
+
+        function increaseQuantity(productId) {
+
+            const item = cart.find(item => item.id === productId);
+
+            if (!item) return;
+
+            if (item.quantity >= item.stock) {
+                alert("Not enough stock available!");
+                return;
+            }
+
+            item.quantity++;
+            renderCart();
+        }
+
+        function decreaseQuantity(productId) {
+
+            const item = cart.find(item => item.id === productId);
+
+            if (!item) return;
+
+            item.quantity--;
+
+            if (item.quantity <= 0) {
+                cart = cart.filter(item => item.id !== productId);
+            }
+
+            renderCart();
+        }
+
+        function removeItem(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            renderCart();
+        }
+
+        function escapeHTML(value) {
+            return String(value).replace(/[&<>"']/g, function(char) {
+                return {
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    '"': "&quot;",
+                    "'": "&#39;"
+                }[char];
+            });
+        }
+
+        function renderCart() {
+
+            const cartContainer = document.getElementById("cart-items");
+
+            if (cart.length === 0) {
+
+                cartContainer.innerHTML = `
+                    <div class="empty-cart">
+                        Your cart is empty.
+                    </div>
+                `;
+
+            } else {
+
+                cartContainer.innerHTML = cart.map(item => `
+
+                    <div class="cart-item">
+
+                        <div class="cart-info">
+                            <strong>${escapeHTML(item.name)}</strong>
+                            <small>
+                                ${formatMoney(item.price)} × ${item.quantity}
+                            </small>
+                            <small>
+                                Total: ${formatMoney(item.price * item.quantity)}
+                            </small>
+                        </div>
+
+                        <div class="quantity-controls">
+
+                            <button onclick="decreaseQuantity(${item.id})">
+                                −
+                            </button>
+
+                            <strong>${item.quantity}</strong>
+
+                            <button onclick="increaseQuantity(${item.id})">
+                                +
+                            </button>
+
+                        </div>
+
+                        <button
+                            class="remove-btn"
+                            onclick="removeItem(${item.id})">
+                            ✕
+                        </button>
+
+                    </div>
+
+                `).join("");
+            }
+
+            document.getElementById("subtotal").textContent =
+                formatMoney(getTotal());
+
+            document.getElementById("total").textContent =
+                formatMoney(getTotal());
+
+            updateChange();
+
+            document.getElementById("checkout-btn").disabled =
+                cart.length === 0;
+        }
+
+        // PAYMENT METHOD CHANGE
+        function updatePaymentMethod() {
+
+            const method = document.getElementById("payment-method").value;
+            const cashField = document.getElementById("cash-field");
+            const amountInput = document.getElementById("amount-paid");
+
+            if (method === "Card") {
+
+                cashField.style.display = "none";
+
+                amountInput.value = getTotal().toFixed(2);
+
+                document.getElementById("change").textContent =
+                    formatMoney(0);
+
+            } else {
+
+                cashField.style.display = "block";
+
+                amountInput.value = "";
+
+                updateChange();
+            }
+        }
+
+        function updateChange() {
+
+            const method = document.getElementById("payment-method").value;
+
+            if (method === "Card") {
+                document.getElementById("change").textContent =
+                    formatMoney(0);
+                return;
+            }
+
+            const paid = Number(
+                document.getElementById("amount-paid").value
+            ) || 0;
+
+            const change = Math.max(0, paid - getTotal());
+
+            document.getElementById("change").textContent =
+                formatMoney(change);
+        }
+
+        async function completeSale() {
+
+            const message = document.getElementById("message");
+            const button = document.getElementById("checkout-btn");
+
+            message.textContent = "";
+
+            if (cart.length === 0) {
+                message.textContent = "Please add products to the cart.";
+                return;
+            }
+
+            const paymentMethod =
+                document.getElementById("payment-method").value;
+
+            let amountPaid;
+
+            if (paymentMethod === "Card") {
+
+                amountPaid = getTotal();
+
+            } else {
+
+                amountPaid = Number(
+                    document.getElementById("amount-paid").value
+                );
+
+                if (
+                    !Number.isFinite(amountPaid) ||
+                    amountPaid < getTotal()
+                ) {
+                    message.textContent =
+                        "Cash received must be equal to or greater than the total.";
+                    return;
+                }
+            }
+
+            const saleData = {
+                cart: cart.map(item => ({
+                    id: item.id,
+                    quantity: item.quantity
+                })),
+                amount_paid: amountPaid,
+                payment_method: paymentMethod
+            };
+
+            button.disabled = true;
+            button.textContent = "Processing...";
+
+            try {
+
+                const response = await fetch("/checkout", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(saleData)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(
+                        result.message || "Sale could not be completed."
+                    );
+                }
+
+                window.location.href = "/receipt/" + result.sale_id;
+
+            } catch (error) {
+
+                message.textContent = error.message;
+
+                button.disabled = false;
+                button.textContent = "Complete Sale";
+            }
+        }
+
+        renderCart();
+        updatePaymentMethod();
+
+    </script>
+
+</body>
+</html>

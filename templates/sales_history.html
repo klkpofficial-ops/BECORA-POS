@@ -1,0 +1,273 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BECORA | Sales History</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: #fff8fa;
+            font-family: Arial, sans-serif;
+            color: #45343b;
+        }
+
+        .header {
+            background: #e88ca9;
+            color: white;
+            padding: 20px 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 { margin: 0; }
+
+        .header a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        h2 { color: #b94f75; }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 23px;
+            border-radius: 12px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+        }
+
+        .summary-card p {
+            color: #888;
+            margin: 0 0 12px;
+        }
+
+        .summary-card h3 {
+            color: #b94f75;
+            font-size: 25px;
+            margin: 0;
+        }
+
+        .panel {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+
+        .panel h3 {
+            color: #b94f75;
+            margin-top: 0;
+        }
+
+        .search-box {
+            width: 100%;
+            max-width: 350px;
+            padding: 12px;
+            border: 1px solid #e6cbd5;
+            border-radius: 7px;
+            margin-bottom: 20px;
+            font-size: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 650px;
+        }
+
+        th {
+            background: #fff0f5;
+            color: #a7476a;
+            padding: 14px;
+            text-align: left;
+        }
+
+        td {
+            padding: 14px;
+            border-bottom: 1px solid #f1e3e8;
+        }
+
+        tr:hover { background: #fffafb; }
+
+        .view-btn {
+            display: inline-block;
+            background: #e88ca9;
+            color: white;
+            text-decoration: none;
+            padding: 8px 13px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .view-btn:hover { background: #d96f91; }
+
+        .empty {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+        }
+
+        @media(max-width: 600px) {
+            .header { padding: 18px; }
+            .container { padding: 0 12px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>BECORA</h1>
+        <a href="/">← Dashboard</a>
+    </div>
+
+    <div class="container">
+
+        <h2>Sales History & Reports</h2>
+        <p>View your daily, monthly and overall sales performance.</p>
+
+        <div class="summary-grid">
+
+            <div class="summary-card">
+                <p>Total Sales</p>
+                <h3>{{ total_sales }}</h3>
+            </div>
+
+            <div class="summary-card">
+                <p>Today's Sales</p>
+                <h3>{{ today_sales }}</h3>
+            </div>
+
+            <div class="summary-card">
+                <p>This Month's Sales</p>
+                <h3>{{ month_sales }}</h3>
+            </div>
+
+            <div class="summary-card">
+                <p>Total Revenue</p>
+                <h3>Rs. {{ "%.2f"|format(total_revenue) }}</h3>
+            </div>
+
+            <div class="summary-card">
+                <p>Today's Revenue</p>
+                <h3>Rs. {{ "%.2f"|format(today_revenue) }}</h3>
+            </div>
+
+            <div class="summary-card">
+                <p>This Month's Revenue</p>
+                <h3>Rs. {{ "%.2f"|format(month_revenue) }}</h3>
+            </div>
+
+        </div>
+
+        <div class="panel">
+
+            <h3>All Transactions</h3>
+
+            <input
+                type="text"
+                id="searchInput"
+                class="search-box"
+                placeholder="Search by Sale ID or Date..."
+                onkeyup="searchSales()">
+
+            <table id="salesTable">
+
+                <thead>
+                    <tr>
+                        <th>Sale ID</th>
+                        <th>Date</th>
+                        <th>Subtotal</th>
+                        <th>Discount</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Receipt</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for sale in sales %}
+
+                    <tr>
+                        <td>#{{ sale['id'] }}</td>
+                        <td>{{ sale['sale_date'] }}</td>
+                        <td>Rs. {{ "%.2f"|format(sale['subtotal']) }}</td>
+                        <td>Rs. {{ "%.2f"|format(sale['discount']) }}</td>
+                        <td>
+                            <strong>
+                                Rs. {{ "%.2f"|format(sale['total']) }}
+                            </strong>
+                        </td>
+                        <td>{{ sale['payment_method'] }}</td>
+                        <td>
+                            <a
+                                class="view-btn"
+                                href="{{ url_for('receipt', sale_id=sale['id']) }}">
+                                View Receipt
+                            </a>
+                        </td>
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+                        <td colspan="7" class="empty">
+                            No sales records found.
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <script>
+        function searchSales() {
+
+            const input = document
+                .getElementById("searchInput")
+                .value.toLowerCase();
+
+            const rows = document
+                .getElementById("salesTable")
+                .getElementsByTagName("tr");
+
+            for (let i = 1; i < rows.length; i++) {
+
+                const text = rows[i].textContent.toLowerCase();
+
+                rows[i].style.display =
+                    text.includes(input) ? "" : "none";
+            }
+        }
+    </script>
+
+</body>
+</html>
